@@ -179,4 +179,61 @@ class Bot:
                     ])
                 )
         return actions
+    
+    def distance(pos1: Position, pos2: Position, game_map: GameMap) -> int:
+        """
+        Calcule la distance réelle (en évitant les murs) entre deux positions
+        Retourne float('inf') si aucun chemin n'existe
+        """
+        from collections import deque
+        
+        directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+        queue = deque([(pos1, 0)])
+        visited = set([(pos1.x, pos1.y)])
+        
+        while queue:
+            current_pos, dist = queue.popleft()
+            
+            if current_pos.x == pos2.x and current_pos.y == pos2.y:
+                return dist
+                
+            for dx, dy in directions:
+                new_x = current_pos.x + dx
+                new_y = current_pos.y + dy
+                
+                if (0 <= new_x < game_map.width and 
+                    0 <= new_y < game_map.height and 
+                    game_map.tiles[new_y][new_x] != TileType.WALL and
+                    (new_x, new_y) not in visited):
+                    
+                    visited.add((new_x, new_y))
+                    queue.append((Position(new_x, new_y), dist + 1))
+        
+        return float('inf')
+    
+    def near_items(character: Character, negativeItems: list[Item], positiveItems: list[Item], game_map: GameMap) -> tuple[Optional[Item], Optional[Item]]:
+        """
+        Trouve les items négatifs et positifs les plus proches qui sont accessibles
+        """
+        if not character.alive:
+            return None, None
+            
+        min_dist_neg = float('inf')
+        min_dist_pos = float('inf')
+        nearest_neg = None
+        nearest_pos = None
+        
+        for item in negativeItems:
+            dist = distance(character.position, item.position, game_map)
+            if dist < min_dist_neg:
+                min_dist_neg = dist
+                nearest_neg = item
+                
+        for item in positiveItems:
+            dist = distance(character.position, item.position, game_map)
+            if dist < min_dist_pos:
+                min_dist_pos = dist
+                nearest_pos = item
+        
+        return nearest_neg, nearest_pos
 
