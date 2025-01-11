@@ -27,8 +27,6 @@ class Bot:
         """
         pass
 
-    def notreZone():
-        pass
 
     def placeToDropPositiveItem(self):
         pass
@@ -36,43 +34,49 @@ class Bot:
     def placeToDropNegativeItem(self):
         pass
 
-    def InTeamZone():
-        pass
+    def InTeamZone(self, character: Character):
+        if character.alive == True:
+            for zonePos in self.analyze_team_zone():
+                if character.position.x == zonePos.x and character.position.y == zonePos.y:
+                    return True
+        return False
+        
+        
 
     def attack(self, character: Character): 
         (negativeItem, positionItem) = sortedItems() #nearItems(character.position)
         
         if len(character.carriedItems) > 0: #si j'ai un item
 
-            if character.carriedItems[0] < 0: # si l'item est positive
+            if character.carriedItems[0] > 0: # si l'item est positive
 
                 if character.position == placeToDropPositiveItem(): #quand j'arrive à la position
-                    DropAction(characterId=character.id)
+                    return DropAction(characterId=character.id)
                 else:
-                    MoveToAction(characterId=character.id, position= placeToDropPositiveItem())
+                    return MoveToAction(characterId=character.id, position= placeToDropPositiveItem())
             
             else: # si l'item est negative
 
                 if character.position == placeToDropNegativeItem(): #quand j'arrive à la position
-                    DropAction(characterId=character.id)
+                    return DropAction(characterId=character.id)
                 else:
-                    MoveToAction(characterId= character.id, position= placeToDropNegativeItem())
+                    return MoveToAction(characterId= character.id, position= placeToDropNegativeItem())
                 pass
         else: #si je n'ai pas d'item
             if InTeamZone() and negativeItem[0].position: #si je suis dans notre zone et qu'il y un item negative
 
                 if character.position == negativeItem[0].position:#quand j'arrive à la position
-                    GrabAction(characterId=character.id)
+                    return GrabAction(characterId=character.id)
                 
                 else:
-                    MoveToAction(characterId=character.id, position= negativeItem[0].position)
+                    return MoveToAction(characterId=character.id, position= negativeItem[0].position)
                 
             elif positionItem[0].position: #s'il y a un item positive hors de notre zone
 
                 if character.position == positionItem[0].position:#quand j'arrive à la position
-                    GrabAction(characterId=character.id)
+                    return GrabAction(characterId=character.id)
                 else:
-                    MoveToAction(characterId=character.id, position=positionItem[0].position)
+                    return MoveToAction(characterId=character.id, position=positionItem[0].position)
             """
             else:
                 se comporter comme un defender
@@ -147,21 +151,32 @@ class Bot:
         actions = []
 
         # Get defender moves first
-        defender_actions = self.get_defender_move(game_message)
-        actions.extend(defender_actions)
 
         # Handle other characters with random moves (skip the defender)
-        for character in game_message.yourCharacters[1:]:  # Start from index 1 to skip defender
+        if len(game_message.yourCharacters) > 1:
+            defender_actions = self.get_defender_move(game_message)
+            actions.extend(defender_actions)
+            for character in game_message.yourCharacters[1:]:  # Start from index 1 to skip defender
+                actions.append(
+                    random.choice([
+                        MoveUpAction(characterId=character.id),
+                        MoveRightAction(characterId=character.id),
+                        MoveDownAction(characterId=character.id),
+                        MoveLeftAction(characterId=character.id),
+                        GrabAction(characterId=character.id),
+                        DropAction(characterId=character.id),
+                    ])
+                )
+        else:
             actions.append(
-                random.choice([
-                    MoveUpAction(characterId=character.id),
-                    MoveRightAction(characterId=character.id),
-                    MoveDownAction(characterId=character.id),
-                    MoveLeftAction(characterId=character.id),
-                    GrabAction(characterId=character.id),
-                    DropAction(characterId=character.id),
-                ])
-            )
-        
+                    random.choice([
+                        MoveUpAction(characterId=character.id),
+                        MoveRightAction(characterId=character.id),
+                        MoveDownAction(characterId=character.id),
+                        MoveLeftAction(characterId=character.id),
+                        GrabAction(characterId=character.id),
+                        DropAction(characterId=character.id),
+                    ])
+                )
         return actions
 
