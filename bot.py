@@ -2,6 +2,10 @@ import random
 from game_message import *
 
 
+import random
+from game_message import *
+
+
 class Bot:
     def __init__(self):
         print("Initializing your super mega duper bot")
@@ -12,20 +16,13 @@ class Bot:
         
         for i in items:
             if (i.type == "radiant_slag" or i.type == "radiant_core") :
-                if i.position in analyze_team_zone () :
+                if i.position in self.analyze_team_zone () :
                     negativeItems.append(i)
             else :
-                if (not i.position in analyze_team_zone() ) :
+                if (not i.position in self.analyze_team_zone() ) :
                     positiveItems.append(i)
 
-        return (negativeItems, positiveItems)
-    
-    def nearItems(self, character: Character):
-        """
-            retourne l'item negative la plus proche dans la zone(None s'il n'y en a pas)
-            et l'item positive la plus proche hors de la zone(None s'il n'y en a pas)
-        """
-        pass
+        return (negativeItems, positiveItems)  
 
 
     def placeToDropPositiveItem(self):
@@ -43,40 +40,40 @@ class Bot:
         
         
 
-    def attack(self, character: Character): 
-        (negativeItem, positionItem) = sortedItems() #nearItems(character.position)
+    def attack(self, character: Character, items: TeamGameState.items, gameMap: TeamGameState.map): 
+        negativeItem, positionItem = self.near_items(character, items,gameMap)
         
         if len(character.carriedItems) > 0: #si j'ai un item
 
             if character.carriedItems[0] > 0: # si l'item est positive
 
-                if character.position == placeToDropPositiveItem(): #quand j'arrive à la position
+                if character.position == self.placeToDropPositiveItem(): #quand j'arrive à la position
                     return DropAction(characterId=character.id)
                 else:
-                    return MoveToAction(characterId=character.id, position= placeToDropPositiveItem())
+                    return MoveToAction(characterId=character.id, position= self.placeToDropPositiveItem())
             
             else: # si l'item est negative
 
-                if character.position == placeToDropNegativeItem(): #quand j'arrive à la position
+                if character.position == self.placeToDropNegativeItem(): #quand j'arrive à la position
                     return DropAction(characterId=character.id)
                 else:
-                    return MoveToAction(characterId= character.id, position= placeToDropNegativeItem())
+                    return MoveToAction(characterId= character.id, position= self.placeToDropNegativeItem())
                 pass
         else: #si je n'ai pas d'item
-            if InTeamZone() and negativeItem[0].position: #si je suis dans notre zone et qu'il y un item negative
+            if self.InTeamZone() and negativeItem: #si je suis dans notre zone et qu'il y un item negative
 
-                if character.position == negativeItem[0].position:#quand j'arrive à la position
+                if character.position == negativeItem:#quand j'arrive à la position
                     return GrabAction(characterId=character.id)
                 
                 else:
-                    return MoveToAction(characterId=character.id, position= negativeItem[0].position)
+                    return MoveToAction(characterId=character.id, position= negativeItem)
                 
-            elif positionItem[0].position: #s'il y a un item positive hors de notre zone
+            elif positionItem: #s'il y a un item positive hors de notre zone
 
-                if character.position == positionItem[0].position:#quand j'arrive à la position
+                if character.position == positionItem:#quand j'arrive à la position
                     return GrabAction(characterId=character.id)
                 else:
-                    return MoveToAction(characterId=character.id, position=positionItem[0].position)
+                    return MoveToAction(characterId=character.id, position=positionItem)
             """
             else:
                 se comporter comme un defender
@@ -211,10 +208,12 @@ class Bot:
         
         return float('inf')
     
-    def near_items(character: Character, negativeItems: list[Item], positiveItems: list[Item], game_map: GameMap) -> tuple[Optional[Item], Optional[Item]]:
+    def near_items(self, character: Character, items: TeamGameState.items, game_map: GameMap) -> tuple[Optional[Item], Optional[Item]]:
         """
         Trouve les items négatifs et positifs les plus proches qui sont accessibles
         """
+        negativeItems, positiveItems = self.sortedItems(items)
+
         if not character.alive:
             return None, None
             
@@ -224,16 +223,15 @@ class Bot:
         nearest_pos = None
         
         for item in negativeItems:
-            dist = distance(character.position, item.position, game_map)
+            dist = self.distance(character.position, item.position, game_map)
             if dist < min_dist_neg:
                 min_dist_neg = dist
                 nearest_neg = item
                 
         for item in positiveItems:
-            dist = distance(character.position, item.position, game_map)
+            dist = self.distance(character.position, item.position, game_map)
             if dist < min_dist_pos:
                 min_dist_pos = dist
                 nearest_pos = item
         
         return nearest_neg, nearest_pos
-
