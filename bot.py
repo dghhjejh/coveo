@@ -31,8 +31,34 @@ class Bot:
     def placeToDropPositiveItem(self):
         pass
 
-    def placeToDropNegativeItem(self):
-        pass
+    def placeToDropNegativeItem(self, game_message: TeamGameState):
+        """
+        Trouve une position hors de notre zone pour déposer un item négatif.
+        Returns a Position object representing where to drop the negative item.
+        """
+        our_zone_positions = self.analyze_team_zone(game_message)
+        our_zone_coords = set((pos.x, pos.y) for pos in our_zone_positions)
+        
+        # Look for an accessible position just outside our zone
+        for zone_pos in our_zone_positions:
+            # Check adjacent positions (up, right, down, left)
+            adjacent_positions = [
+                Position(zone_pos.x, zone_pos.y - 1),  # up
+                Position(zone_pos.x + 1, zone_pos.y),  # right
+                Position(zone_pos.x, zone_pos.y + 1),  # down
+                Position(zone_pos.x - 1, zone_pos.y)   # left
+            ]
+            
+            for pos in adjacent_positions:
+                # Check if position is valid (within map bounds and not a wall)
+                if (0 <= pos.x < game_message.map.width and 
+                    0 <= pos.y < game_message.map.height and 
+                    game_message.map.tiles[pos.y][pos.x] != TileType.WALL and
+                    (pos.x, pos.y) not in our_zone_coords):
+                    return pos
+                    
+        return None
+
 
     def InTeamZone(self, character: Character):
         if character.alive == True:
