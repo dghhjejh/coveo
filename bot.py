@@ -40,19 +40,20 @@ class Bot:
         actions = []
         zonePositions = self.analyze_team_zone(game_message)
         defender = game_message.yourCharacters[0]
-        
-        for character in game_message.otherCharacters:
-            # Check if any position in our zone matches the character's position
-            for zonePos in zonePositions:
-                if character.position.x == zonePos.x and character.position.y == zonePos.y:
-                    actions.append(
-                        MoveToAction(
-                            characterId=defender.id, 
-                            position=Position(character.x, character.y)
-                        )
-                    )
-                    return actions  # Return as soon as we find an enemy to chase
-                    
+        if defender.alive == True:
+            for character in game_message.otherCharacters:
+                # Check if any position in our zone matches the character's position
+                if character.alive == True:
+                    for zonePos in zonePositions:
+                        if character.position.x == zonePos.x and character.position.y == zonePos.y:
+                            actions.append(
+                                MoveToAction(
+                                    characterId=defender.id, 
+                                    position=Position(character.position.x, character.position.y)
+                                )
+                            )
+                            return actions  # Return as soon as we find an enemy to chase
+                        
         # If no enemies found in our zone, maybe add default position for defender
         if zonePositions:  # If we have at least one zone position
             # Move to middle of our zone if no enemies found
@@ -65,25 +66,28 @@ class Bot:
             )
         
         return actions
+    
     def get_next_move(self, game_message: TeamGameState):
         """
-        Here is where the magic happens, for now the moves are not very good. I bet you can do better ;)
+        Here is where the magic happens, combining defender moves with other character moves
         """
         actions = []
 
-        for character in game_message.yourCharacters:
-            actions.append(
-                random.choice(
-                    [
-                        MoveUpAction(characterId=character.id),
-                        MoveRightAction(characterId=character.id),
-                        MoveDownAction(characterId=character.id),
-                        MoveLeftAction(characterId=character.id),
-                        GrabAction(characterId=character.id),
-                        DropAction(characterId=character.id),
-                    ]
-                )
-            )
+        # Get defender moves first
+        defender_actions = self.get_defender_move(game_message)
+        actions.extend(defender_actions)
 
-        # You can clearly do better than the random actions above! Have fun!
+        # Handle other characters with random moves (skip the defender)
+        for character in game_message.yourCharacters[1:]:  # Start from index 1 to skip defender
+            actions.append(
+                random.choice([
+                    MoveUpAction(characterId=character.id),
+                    MoveRightAction(characterId=character.id),
+                    MoveDownAction(characterId=character.id),
+                    MoveLeftAction(characterId=character.id),
+                    GrabAction(characterId=character.id),
+                    DropAction(characterId=character.id),
+                ])
+            )
+        
         return actions
