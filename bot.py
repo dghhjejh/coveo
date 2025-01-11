@@ -2,6 +2,10 @@ import random
 from game_message import *
 
 
+import random
+from game_message import *
+
+
 class Bot:
     def __init__(self):
         print("Initializing your super mega duper bot")
@@ -70,7 +74,6 @@ class Bot:
                 Position(zone_pos.x, zone_pos.y + 1),  # down
                 Position(zone_pos.x - 1, zone_pos.y)   # left
             ]
-
             for pos in adjacent_positions:
                 # Check if position is valid (within map bounds and not a wall)
                 if (0 <= pos.x < game_message.map.width and 
